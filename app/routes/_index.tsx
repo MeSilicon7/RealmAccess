@@ -1,5 +1,6 @@
 import type { ActionFunction, LoaderFunction, MetaFunction } from '@remix-run/cloudflare';
 import { Form, json, redirect, useActionData } from '@remix-run/react';
+import { useState } from 'react';
 import jwt from 'jsonwebtoken';
 
 export const meta: MetaFunction = () => [
@@ -21,10 +22,9 @@ export const loader: LoaderFunction = async ({ request }) => {
     }
 
     return null;
+};
 
-  };
-
-  export const action: ActionFunction = async ({ context, request }) => {
+export const action: ActionFunction = async ({ context, request }) => {
     const formData = await request.formData();
     const email = formData.get('email');
     const password = formData.get('password');
@@ -71,58 +71,108 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export default function Index() {
     const actionData = useActionData();
+    const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-            <div className="w-full max-w-md bg-white shadow-md rounded px-8 py-6 space-y-6">
-                <h1 className="text-2xl font-bold text-center">RealmAccess</h1>
-
-                {/* Login Form */}
-                <div>
-                    <h2 className="text-xl font-semibold">Login</h2>
-                    <Form method="POST" className="space-y-4">
-                        <input type="hidden" name="actionType" value="login" />
-                        {actionData?.error && <p className="text-red-500 text-sm">{actionData.error}</p>}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                Email
-                                <input type="email" name="email" required className="mt-1 block w-full p-2 border rounded-md" />
-                            </label>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                Password
-                                <input type="password" name="password" required className="mt-1 block w-full p-2 border rounded-md" />
-                            </label>
-                        </div>
-                        <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
-                            Login
-                        </button>
-                    </Form>
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+            <div className="w-full max-w-md bg-white shadow-lg rounded-lg">
+                <div className="border-b flex">
+                    <button
+                        onClick={() => setActiveTab('login')}
+                        className={`w-1/2 py-3 text-center font-semibold ${
+                            activeTab === 'login' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500'
+                        }`}
+                    >
+                        Login
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('register')}
+                        className={`w-1/2 py-3 text-center font-semibold ${
+                            activeTab === 'register' ? 'border-b-2 border-green-500 text-green-500' : 'text-gray-500'
+                        }`}
+                    >
+                        Register
+                    </button>
                 </div>
-
-                {/* Registration Form */}
-                <div>
-                    <h2 className="text-xl font-semibold">Register</h2>
-                    <Form method="POST" className="space-y-4">
-                        <input type="hidden" name="actionType" value="register" />
-                        {actionData?.error && <p className="text-red-500 text-sm">{actionData.error}</p>}
+                <div className="p-6">
+                    {activeTab === 'login' && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                Email
-                                <input type="email" name="email" required className="mt-1 block w-full p-2 border rounded-md" />
-                            </label>
+                            <h2 className="text-xl font-semibold text-center mb-4">Login</h2>
+                            <Form method="POST" className="space-y-4">
+                                <input type="hidden" name="actionType" value="login" />
+                                {actionData?.error && (
+                                    <p className="text-red-500 text-sm text-center">{actionData.error}</p>
+                                )}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Email
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            required
+                                            className="mt-1 block w-full p-2 border rounded-md"
+                                        />
+                                    </label>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Password
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            required
+                                            className="mt-1 block w-full p-2 border rounded-md"
+                                        />
+                                    </label>
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+                                >
+                                    Login
+                                </button>
+                            </Form>
                         </div>
+                    )}
+                    {activeTab === 'register' && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                Password
-                                <input type="password" name="password" required className="mt-1 block w-full p-2 border rounded-md" />
-                            </label>
+                            <h2 className="text-xl font-semibold text-center mb-4">Register</h2>
+                            <Form method="POST" className="space-y-4">
+                                <input type="hidden" name="actionType" value="register" />
+                                {actionData?.error && (
+                                    <p className="text-red-500 text-sm text-center">{actionData.error}</p>
+                                )}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Email
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            required
+                                            className="mt-1 block w-full p-2 border rounded-md"
+                                        />
+                                    </label>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Password
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            required
+                                            className="mt-1 block w-full p-2 border rounded-md"
+                                        />
+                                    </label>
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+                                >
+                                    Register
+                                </button>
+                            </Form>
                         </div>
-                        <button type="submit" className="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600">
-                            Register
-                        </button>
-                    </Form>
+                    )}
                 </div>
             </div>
         </div>
