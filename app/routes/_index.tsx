@@ -1,7 +1,7 @@
 import type { ActionFunction, LoaderFunction, MetaFunction } from '@remix-run/cloudflare';
 import { Form, json, redirect, useActionData } from '@remix-run/react';
 import { useState } from 'react';
-import jwt from 'jsonwebtoken';
+import { SignJWT, jwtVerify } from 'jose';
 
 export const meta: MetaFunction = () => [
     {
@@ -14,11 +14,20 @@ interface Env {
     DB: D1Database;
 }
 
+const SECRET_KEY = new TextEncoder().encode('your_secret_key'); // Replace with a secure, random key.
+
 export const loader: LoaderFunction = async ({ request }) => {
     const token = request.headers.get("Cookie")?.split("session=")[1]?.split(";")[0];
-  
+
     if (token) {
-      return redirect("/secrets-post");
+        try {
+            // Verify the token
+            await jwtVerify(token, SECRET_KEY);
+            return redirect("/secrets-post");
+        } catch {
+            // Invalid or expired token
+            return null;
+        }
     }
 
     return null;
@@ -38,10 +47,16 @@ export const action: ActionFunction = async ({ context, request }) => {
 
     try {
         if (actionType === 'login') {
-            const { results } = await env.DB.prepare('SELECT * FROM User WHERE email = ? AND password = ?').bind(email, password).all();
+            const { results } = await env.DB.prepare('SELECT * FROM User WHERE email = ? AND password = ?')
+                .bind(email, password)
+                .all();
 
             if (results.length > 0) {
-                const token = jwt.sign({ email }, 'your_secret_key', { expiresIn: '1h' });
+                // Create a JWT
+                const token = await new SignJWT({ email })
+                    .setProtectedHeader({ alg: 'HS256' })
+                    .setExpirationTime('1h')
+                    .sign(SECRET_KEY);
 
                 const headers = new Headers();
                 headers.append('Set-Cookie', `session=${token}; HttpOnly; Path=/; Max-Age=3600;`);
@@ -51,13 +66,17 @@ export const action: ActionFunction = async ({ context, request }) => {
                 return json({ error: 'Invalid email or password.' }, { status: 401 });
             }
         } else if (actionType === 'register') {
-            const { results: existingUser } = await env.DB.prepare('SELECT EXISTS (SELECT 1 FROM User WHERE email = ?)').bind(email).all();
+            const { results: existingUser } = await env.DB.prepare('SELECT EXISTS (SELECT 1 FROM User WHERE email = ?)')
+                .bind(email)
+                .all();
 
             if (existingUser[0]['EXISTS (SELECT 1 FROM User WHERE email = ?)'] === 1) {
                 return json({ error: 'Email is already registered.' }, { status: 409 });
             }
 
-            await env.DB.prepare('INSERT INTO User (email, password) VALUES (?, ?)').bind(email, password).run();
+            await env.DB.prepare('INSERT INTO User (email, password) VALUES (?, ?)')
+                .bind(email, password)
+                .run();
 
             return json({ success: true, message: 'Registration successful!' });
         } else {
