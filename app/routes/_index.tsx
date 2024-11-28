@@ -13,9 +13,16 @@ interface Env {
     DB: D1Database;
 }
 
-export const loader: LoaderFunction = async () => {
-    return { message: 'Hello from the loader!' };
-};
+export const loader: LoaderFunction = async ({ request }) => {
+    const token = request.headers.get("Cookie")?.split("session=")[1]?.split(";")[0];
+  
+    if (token) {
+      return redirect("/secrets-post");
+    }
+
+    return null;
+
+  };
 
 export const action: ActionFunction = async ({ context, request }) => {
     const formData = await request.formData();
@@ -60,7 +67,7 @@ export const action: ActionFunction = async ({ context, request }) => {
         } else {
             return { error: 'Invalid action type.' };
         }
-    } catch (e: any) {
+    } catch (e) {
         console.error('Database Error:', e);
         return { error: 'An error occurred during the process.' };
     }
