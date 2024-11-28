@@ -2,6 +2,9 @@
 
 This project is a hobby project with the main purpose of utilizing Cloudflare D1 and RemixJS on Cloudflare Pages. It uses `d1-auto-migrate.ts` for database migration, Prisma for ORM, and Cloudflare's native database methods for querying.
 
+![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)
+**upcoming**
+
 ## Features
 
 - Users can see text based on their roles.
