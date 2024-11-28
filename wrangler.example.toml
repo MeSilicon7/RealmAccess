@@ -1,0 +1,11 @@
+name = "realmaccess"
+compatibility_date = "24-11-2024"
+pages_build_output_dir = "./build/client"
+
+# Bind a D1 database. D1 is Cloudflare’s native serverless SQL database.
+# Docs: https://developers.cloudflare.com/pages/functions/bindings/#d1-databases
+
+[[d1_databases]]
+binding = "DB"
+database_name = "you db name"
+database_id = "id"

@@ -1,0 +1,32 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  password   String
+  roles      Role?    @relation(fields: [roleId], references: [id])
+  roleId     Int?
+  expireDate DateTime @default(now())
+}
+
+model Role {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique // e.g., "ROLE_1", "ROLE_2", etc.
+  User     User[]
+  RoleText RoleText?
+}
+
+model RoleText {
+  id     Int    @id @default(autoincrement())
+  role   Role   @relation(fields: [roleId], references: [id])
+  roleId Int    @unique
+  text   String
+}
