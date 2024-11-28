@@ -17,13 +17,13 @@ interface Env {
 const SECRET_KEY = new TextEncoder().encode('your_secret_key'); // Replace with a secure, random key.
 
 export const loader: LoaderFunction = async ({ request }) => {
-    const token = request.headers.get("Cookie")?.split("session=")[1]?.split(";")[0];
+    const token = request.headers.get('Cookie')?.split('session=')[1]?.split(';')[0];
 
     if (token) {
         try {
             // Verify the token
             await jwtVerify(token, SECRET_KEY);
-            return redirect("/secrets-post");
+            return redirect('/secrets-post');
         } catch {
             // Invalid or expired token
             return null;
@@ -47,13 +47,12 @@ export const action: ActionFunction = async ({ context, request }) => {
 
     try {
         if (actionType === 'login') {
-            const { results } = await env.DB.prepare('SELECT * FROM User WHERE email = ? AND password = ?')
-                .bind(email, password)
-                .all();
+            const { results } = await env.DB.prepare('SELECT * FROM User WHERE email = ? AND password = ?').bind(email, password).all();
 
             if (results.length > 0) {
-                // Create a JWT
-                const token = await new SignJWT({ email })
+                const user = results[0];
+                // Create a JWT with email and roleId
+                const token = await new SignJWT({ email: user.email, roleId: user.roleId })
                     .setProtectedHeader({ alg: 'HS256' })
                     .setExpirationTime('1h')
                     .sign(SECRET_KEY);
@@ -66,17 +65,13 @@ export const action: ActionFunction = async ({ context, request }) => {
                 return json({ error: 'Invalid email or password.' }, { status: 401 });
             }
         } else if (actionType === 'register') {
-            const { results: existingUser } = await env.DB.prepare('SELECT EXISTS (SELECT 1 FROM User WHERE email = ?)')
-                .bind(email)
-                .all();
+            const { results: existingUser } = await env.DB.prepare('SELECT EXISTS (SELECT 1 FROM User WHERE email = ?)').bind(email).all();
 
             if (existingUser[0]['EXISTS (SELECT 1 FROM User WHERE email = ?)'] === 1) {
                 return json({ error: 'Email is already registered.' }, { status: 409 });
             }
 
-            await env.DB.prepare('INSERT INTO User (email, password) VALUES (?, ?)')
-                .bind(email, password)
-                .run();
+            await env.DB.prepare('INSERT INTO User (email, password) VALUES (?, ?)').bind(email, password).run();
 
             return json({ success: true, message: 'Registration successful!' });
         } else {
@@ -119,35 +114,20 @@ export default function Index() {
                             <h2 className="text-xl font-semibold text-center mb-4">Login</h2>
                             <Form method="POST" className="space-y-4">
                                 <input type="hidden" name="actionType" value="login" />
-                                {actionData?.error && (
-                                    <p className="text-red-500 text-sm text-center">{actionData.error}</p>
-                                )}
+                                {actionData?.error && <p className="text-red-500 text-sm text-center">{actionData.error}</p>}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">
                                         Email
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            required
-                                            className="mt-1 block w-full p-2 border rounded-md"
-                                        />
+                                        <input type="email" name="email" required className="mt-1 block w-full p-2 border rounded-md" />
                                     </label>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">
                                         Password
-                                        <input
-                                            type="password"
-                                            name="password"
-                                            required
-                                            className="mt-1 block w-full p-2 border rounded-md"
-                                        />
+                                        <input type="password" name="password" required className="mt-1 block w-full p-2 border rounded-md" />
                                     </label>
                                 </div>
-                                <button
-                                    type="submit"
-                                    className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-                                >
+                                <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">
                                     Login
                                 </button>
                             </Form>
@@ -158,35 +138,20 @@ export default function Index() {
                             <h2 className="text-xl font-semibold text-center mb-4">Register</h2>
                             <Form method="POST" className="space-y-4">
                                 <input type="hidden" name="actionType" value="register" />
-                                {actionData?.error && (
-                                    <p className="text-red-500 text-sm text-center">{actionData.error}</p>
-                                )}
+                                {actionData?.error && <p className="text-red-500 text-sm text-center">{actionData.error}</p>}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">
                                         Email
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            required
-                                            className="mt-1 block w-full p-2 border rounded-md"
-                                        />
+                                        <input type="email" name="email" required className="mt-1 block w-full p-2 border rounded-md" />
                                     </label>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">
                                         Password
-                                        <input
-                                            type="password"
-                                            name="password"
-                                            required
-                                            className="mt-1 block w-full p-2 border rounded-md"
-                                        />
+                                        <input type="password" name="password" required className="mt-1 block w-full p-2 border rounded-md" />
                                     </label>
                                 </div>
-                                <button
-                                    type="submit"
-                                    className="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
-                                >
+                                <button type="submit" className="w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600">
                                     Register
                                 </button>
                             </Form>
